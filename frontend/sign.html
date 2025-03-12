@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <button onclick="requestSignature()">Sign</button>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js"></script>
+  <script>
+    async function requestSignature() {
+      if (typeof window.ethereum === 'undefined') {
+        alert('MetaMask not installed!');
+        return;
+      }
+	  
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+	  console.log(signer);
+      const address = await signer.getAddress();
+	  console.log(`address is ${address}`);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const challenge = urlParams.get('challenge');
+	  console.log(`challenge is ${challenge}`);
+      const signature = await signer.signMessage(challenge);
+	  console.log(`Signature is ${signature}`);
+	  const shares_subject = "";
+	  const user = "";
+
+      const response = await fetch('http://127.0.0.1:8080/verify-signature', {
+	    headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        body: JSON.stringify({ challenge, signature,shares_subject,user })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Ok！Back Telegram');
+        window.close();
+      } else {
+        alert('Failed: ' + result.error);
+      }
+    }
+  </script>
+</body>
+</html>
